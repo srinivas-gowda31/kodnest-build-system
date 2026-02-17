@@ -10,6 +10,11 @@ const links = [
   { to: "/proof", label: "Proof" },
 ];
 
+const testLinks = [
+  { to: "/jt/07-test", label: "Test" },
+  { to: "/jt/08-ship", label: "Ship" },
+];
+
 const AppNav = () => {
   const [open, setOpen] = useState(false);
 
@@ -27,6 +32,20 @@ const AppNav = () => {
               <NavLink
                 to={l.to}
                 className="pb-1 text-sm text-muted-foreground transition-colors duration-base hover:text-foreground"
+                activeClassName="text-primary border-b-2 border-primary"
+              >
+                {l.label}
+              </NavLink>
+            </li>
+          ))}
+          <li className="border-l border-border px-space-2">
+            {/* Test section separator */}
+          </li>
+          {testLinks.map((l) => (
+            <li key={l.to}>
+              <NavLink
+                to={l.to}
+                className="pb-1 text-xs text-muted-foreground transition-colors duration-base hover:text-foreground"
                 activeClassName="text-primary border-b-2 border-primary"
               >
                 {l.label}
@@ -53,6 +72,19 @@ const AppNav = () => {
               <NavLink
                 to={l.to}
                 className="block py-2 text-sm text-muted-foreground transition-colors duration-base hover:text-foreground"
+                activeClassName="text-primary font-medium"
+                onClick={() => setOpen(false)}
+              >
+                {l.label}
+              </NavLink>
+            </li>
+          ))}
+          <li className="border-t border-border my-2" />
+          {testLinks.map((l) => (
+            <li key={l.to}>
+              <NavLink
+                to={l.to}
+                className="block py-2 text-xs text-muted-foreground transition-colors duration-base hover:text-foreground"
                 activeClassName="text-primary font-medium"
                 onClick={() => setOpen(false)}
               >
