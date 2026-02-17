@@ -137,3 +137,122 @@ export function loadPreferences(): JobTrackerPreferences {
   }
   return DEFAULT_PREFERENCES;
 }
+
+// ========== DIGEST LOGIC ==========
+
+export interface DigestJob {
+  id: number;
+  title: string;
+  company: string;
+  location: string;
+  experience: string;
+  matchScore: number;
+  applyUrl: string;
+}
+
+export interface JobDigest {
+  date: string;
+  generatedAt: string;
+  jobs: DigestJob[];
+}
+
+/**
+ * Get today's digest key for localStorage
+ */
+function getTodayDigestKey(): string {
+  const today = new Date().toISOString().split("T")[0];
+  return `jobTrackerDigest_${today}`;
+}
+
+/**
+ * Generate today's digest (top 10 jobs by matchScore desc, postedDaysAgo asc)
+ */
+export function generateDigest(
+  jobs: Job[],
+  preferences: JobTrackerPreferences
+): JobDigest {
+  // Calculate scores for all jobs
+  const jobsWithScores = jobs.map((job) => ({
+    job,
+    matchScore: calculateMatchScore(job, preferences),
+  }));
+
+  // Sort by matchScore descending, then by postedDaysAgo ascending
+  const topJobs = jobsWithScores
+    .sort((a, b) => {
+      if (b.matchScore !== a.matchScore) {
+        return b.matchScore - a.matchScore;
+      }
+      return a.job.postedDaysAgo - b.job.postedDaysAgo;
+    })
+    .slice(0, 10)
+    .map((item) => ({
+      id: item.job.id,
+      title: item.job.title,
+      company: item.job.company,
+      location: item.job.location,
+      experience: item.job.experience,
+      matchScore: item.matchScore,
+      applyUrl: item.job.applyUrl,
+    }));
+
+  const today = new Date().toISOString().split("T")[0];
+
+  return {
+    date: today,
+    generatedAt: new Date().toLocaleString(),
+    jobs: topJobs,
+  };
+}
+
+/**
+ * Save digest to localStorage
+ */
+export function saveDigest(digest: JobDigest): void {
+  localStorage.setItem(getTodayDigestKey(), JSON.stringify(digest));
+}
+
+/**
+ * Load today's digest from localStorage
+ */
+export function loadTodayDigest(): JobDigest | null {
+  const stored = localStorage.getItem(getTodayDigestKey());
+  if (stored) {
+    try {
+      return JSON.parse(stored);
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+/**
+ * Format digest as plain text for copying/emailing
+ */
+export function formatDigestAsText(digest: JobDigest): string {
+  const lines: string[] = [];
+  lines.push("TOP 10 JOBS FOR YOU — 9AM DIGEST");
+  lines.push(`Generated: ${digest.generatedAt}`);
+  lines.push("");
+  lines.push("---");
+  lines.push("");
+
+  digest.jobs.forEach((job, index) => {
+    lines.push(`${index + 1}. ${job.title}`);
+    lines.push(`   Company: ${job.company}`);
+    lines.push(`   Location: ${job.location}`);
+    lines.push(`   Experience: ${job.experience}`);
+    lines.push(`   Match Score: ${job.matchScore}`);
+    lines.push(`   Apply: ${job.applyUrl}`);
+    lines.push("");
+  });
+
+  lines.push("---");
+  lines.push("This digest was generated based on your preferences.");
+  lines.push(
+    "Demo Mode: Daily 9AM trigger simulated manually."
+  );
+
+  return lines.join("\n");
+}
