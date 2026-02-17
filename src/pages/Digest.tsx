@@ -1,7 +1,5 @@
-'use client';
-
 import { useState, useEffect, useMemo } from "react";
-import { Mail, Copy, Send, RefreshCw, AlertCircle, Check } from "lucide-react";
+import { Mail, Copy, Send, RefreshCw, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -16,6 +14,8 @@ import {
   formatDigestAsText,
   JobDigest,
   getScoreBadgeColor,
+  getRecentStatusUpdates,
+  getStatusColor,
 } from "@/lib/scoring";
 
 const Digest = () => {
@@ -254,8 +254,61 @@ const Digest = () => {
           Regenerate
         </Button>
       </div>
+
+      {/* Recent Status Updates */}
+      <RecentStatusUpdates />
     </div>
   );
 };
+
+/**
+ * Recent Status Updates Component
+ */
+function RecentStatusUpdates() {
+  const recentUpdates = useMemo(() => {
+    return getRecentStatusUpdates(jobs);
+  }, []);
+
+  if (recentUpdates.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="mt-space-6">
+      <h3 className="mb-space-3 text-lg font-semibold">Recent Status Updates</h3>
+      <Card>
+        <CardContent className="p-space-4">
+          <div className="space-y-space-2">
+            {recentUpdates.map((update, index) => (
+              <div key={index}>
+                <div className="flex items-center justify-between gap-space-2">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-sm">{update.job.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {update.job.company}
+                    </p>
+                  </div>
+                  <Badge
+                    className={`shrink-0 text-xs font-semibold ${getStatusColor(
+                      update.status
+                    )}`}
+                  >
+                    {update.status}
+                  </Badge>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {new Date(update.changedAt).toLocaleString()}
+                </p>
+                {index < recentUpdates.length - 1 && (
+                  <Separator className="my-space-2" />
+                )}
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
 
 export default Digest;

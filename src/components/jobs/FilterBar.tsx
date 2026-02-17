@@ -14,6 +14,7 @@ export interface Filters {
   mode: string;
   experience: string;
   source: string;
+  status: string;
   sort: string;
 }
 
@@ -87,6 +88,19 @@ const FilterBar = ({ filters, onChange, locations }: FilterBarProps) => {
           <SelectItem value="LinkedIn">LinkedIn</SelectItem>
           <SelectItem value="Naukri">Naukri</SelectItem>
           <SelectItem value="Indeed">Indeed</SelectItem>
+        </SelectContent>
+      </Select>
+
+      <Select value={filters.status} onValueChange={(v) => set("status", v)}>
+        <SelectTrigger className="w-[150px]">
+          <SelectValue placeholder="Status" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">All Status</SelectItem>
+          <SelectItem value="Not Applied">Not Applied</SelectItem>
+          <SelectItem value="Applied">Applied</SelectItem>
+          <SelectItem value="Rejected">Rejected</SelectItem>
+          <SelectItem value="Selected">Selected</SelectItem>
         </SelectContent>
       </Select>
 

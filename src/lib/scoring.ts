@@ -256,3 +256,141 @@ export function formatDigestAsText(digest: JobDigest): string {
 
   return lines.join("\n");
 }
+
+// ========== JOB STATUS TRACKING ==========
+
+export type JobStatus = "Not Applied" | "Applied" | "Rejected" | "Selected";
+
+export interface JobStatusEntry {
+  jobId: number;
+  status: JobStatus;
+  changedAt: string;
+}
+
+const STATUS_STORAGE_KEY = "jobTrackerStatus";
+const STATUS_HISTORY_KEY = "jobTrackerStatusHistory";
+
+/**
+ * Get status color for badge
+ */
+export function getStatusColor(status: JobStatus): string {
+  switch (status) {
+    case "Applied":
+      return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
+    case "Rejected":
+      return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200";
+    case "Selected":
+      return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
+    case "Not Applied":
+    default:
+      return "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200";
+  }
+}
+
+/**
+ * Get job status from localStorage
+ */
+export function getJobStatus(jobId: number): JobStatus {
+  const stored = localStorage.getItem(STATUS_STORAGE_KEY);
+  if (stored) {
+    try {
+      const statuses: Record<string, JobStatus> = JSON.parse(stored);
+      return statuses[jobId] || "Not Applied";
+    } catch {
+      return "Not Applied";
+    }
+  }
+  return "Not Applied";
+}
+
+/**
+ * Set job status in localStorage
+ */
+export function setJobStatus(jobId: number, status: JobStatus): void {
+  const stored = localStorage.getItem(STATUS_STORAGE_KEY);
+  let statuses: Record<string, JobStatus> = {};
+
+  if (stored) {
+    try {
+      statuses = JSON.parse(stored);
+    } catch {
+      statuses = {};
+    }
+  }
+
+  statuses[jobId] = status;
+  localStorage.setItem(STATUS_STORAGE_KEY, JSON.stringify(statuses));
+
+  // Add to history
+  addStatusHistory(jobId, status);
+}
+
+/**
+ * Add status change to history
+ */
+function addStatusHistory(jobId: number, status: JobStatus): void {
+  const stored = localStorage.getItem(STATUS_HISTORY_KEY);
+  let history: JobStatusEntry[] = [];
+
+  if (stored) {
+    try {
+      history = JSON.parse(stored);
+    } catch {
+      history = [];
+    }
+  }
+
+  history.push({
+    jobId,
+    status,
+    changedAt: new Date().toISOString(),
+  });
+
+  // Keep only last 50 entries
+  if (history.length > 50) {
+    history = history.slice(-50);
+  }
+
+  localStorage.setItem(STATUS_HISTORY_KEY, JSON.stringify(history));
+}
+
+/**
+ * Get status history
+ */
+export function getStatusHistory(): JobStatusEntry[] {
+  const stored = localStorage.getItem(STATUS_HISTORY_KEY);
+  if (stored) {
+    try {
+      return JSON.parse(stored);
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
+/**
+ * Get recent status updates (last 10)
+ */
+export function getRecentStatusUpdates(jobsData: Job[]): Array<{
+  job: Job;
+  status: JobStatus;
+  changedAt: string;
+}> {
+  const history = getStatusHistory();
+  const recent = history.slice(-10).reverse();
+
+  return recent
+    .map((entry) => {
+      const job = jobsData.find((j) => j.id === entry.jobId);
+      return job
+        ? { job, status: entry.status, changedAt: entry.changedAt }
+        : null;
+    })
+    .filter((item) => item !== null) as Array<{
+      job: Job;
+      status: JobStatus;
+      changedAt: string;
+    }>;
+}
+

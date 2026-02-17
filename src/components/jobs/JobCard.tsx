@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { Job } from "@/data/jobs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Bookmark, BookmarkCheck, ExternalLink, Eye, MapPin, Clock } from "lucide-react";
-import { getScoreBadgeColor } from "@/lib/scoring";
+import { getScoreBadgeColor, getJobStatus, setJobStatus, getStatusColor, JobStatus } from "@/lib/scoring";
+import { useToast } from "@/hooks/use-toast";
 
 interface JobCardProps {
   job: Job;
@@ -19,6 +21,8 @@ const sourceColor: Record<string, string> = {
   Indeed: "bg-warning/10 text-warning-foreground",
 };
 
+const statusOptions: JobStatus[] = ["Not Applied", "Applied", "Rejected", "Selected"];
+
 const JobCard = ({
   job,
   matchScore,
@@ -26,12 +30,25 @@ const JobCard = ({
   onToggleSave,
   onView,
 }: JobCardProps) => {
+  const [status, setStatus] = useState<JobStatus>(getJobStatus(job.id));
+  const { toast } = useToast();
+
   const posted =
     job.postedDaysAgo === 0
       ? "Today"
       : job.postedDaysAgo === 1
       ? "1 day ago"
       : `${job.postedDaysAgo} days ago`;
+
+  const handleStatusChange = (newStatus: JobStatus) => {
+    setJobStatus(job.id, newStatus);
+    setStatus(newStatus);
+    toast({
+      title: "Status Updated",
+      description: `"${job.title}" marked as ${newStatus}`,
+      duration: 2000,
+    });
+  };
 
   return (
     <Card className="transition-shadow duration-base hover:shadow-sm">
@@ -54,6 +71,11 @@ const JobCard = ({
               </Badge>
             )}
             <Badge
+              className={`text-xs font-semibold ${getStatusColor(status)}`}
+            >
+              {status}
+            </Badge>
+            <Badge
               variant="secondary"
               className={`text-xs ${sourceColor[job.source] ?? ""}`}
             >
@@ -73,6 +95,21 @@ const JobCard = ({
             <Clock className="h-3.5 w-3.5" />
             {posted}
           </span>
+        </div>
+
+        {/* Status Buttons */}
+        <div className="mt-space-2 flex flex-wrap gap-1">
+          {statusOptions.map((statusOption) => (
+            <Button
+              key={statusOption}
+              variant={status === statusOption ? "default" : "outline"}
+              size="xs"
+              onClick={() => handleStatusChange(statusOption)}
+              className="text-xs"
+            >
+              {statusOption}
+            </Button>
+          ))}
         </div>
 
         <div className="mt-space-3 flex flex-wrap gap-2">

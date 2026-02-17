@@ -12,6 +12,7 @@ import {
   loadPreferences,
   calculateMatchScore,
   JobTrackerPreferences,
+  getJobStatus,
 } from "@/lib/scoring";
 
 const defaultFilters: Filters = {
@@ -20,6 +21,7 @@ const defaultFilters: Filters = {
   mode: "all",
   experience: "all",
   source: "all",
+  status: "all",
   sort: "latest",
 };
 
@@ -106,6 +108,11 @@ const Dashboard = () => {
     // Apply source filter
     if (filters.source !== "all") {
       list = list.filter((item) => item.job.source === filters.source);
+    }
+
+    // Apply status filter
+    if (filters.status !== "all") {
+      list = list.filter((item) => getJobStatus(item.job.id) === filters.status);
     }
 
     // Apply sorting
