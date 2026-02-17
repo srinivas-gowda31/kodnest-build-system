@@ -101,7 +101,7 @@ const Digest = () => {
     );
   }
 
-  // No digest generated yet
+  // No digest generated yet - show button to generate
   if (!digest) {
     return (
       <div className="mx-auto w-full max-w-2xl px-space-3 py-space-4">
@@ -117,9 +117,10 @@ const Digest = () => {
               onClick={handleGenerateDigest}
               className="mt-space-3"
               size="lg"
+              disabled={loading}
             >
               <RefreshCw className="mr-2 h-4 w-4" />
-              Generate Today's 9AM Digest
+              {loading ? "Generating..." : "Generate Today's 9AM Digest"}
             </Button>
           </CardContent>
         </Card>
